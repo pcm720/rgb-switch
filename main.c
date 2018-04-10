@@ -117,13 +117,7 @@ void init(switchState* state) {
 void displayInit(uint8_t rotation) {
     switch(rotation) {
         case 1:
-            u8g2_Setup_sh1106_i2c_128x64_noname_f(&u8g2, U8G2_R1, u8x8_byte_atmega328p_hw_i2c, u8g2_gpio_and_delay_atmega328p);
-            break;
-        case 2:
             u8g2_Setup_sh1106_i2c_128x64_noname_f(&u8g2, U8G2_R2, u8x8_byte_atmega328p_hw_i2c, u8g2_gpio_and_delay_atmega328p);
-            break;
-        case 3:
-            u8g2_Setup_sh1106_i2c_128x64_noname_f(&u8g2, U8G2_R3, u8x8_byte_atmega328p_hw_i2c, u8g2_gpio_and_delay_atmega328p);
             break;
         default:
             u8g2_Setup_sh1106_i2c_128x64_noname_f(&u8g2, U8G2_R0, u8x8_byte_atmega328p_hw_i2c, u8g2_gpio_and_delay_atmega328p);
@@ -196,7 +190,7 @@ void options_menu(switchState* state) {
     uint8_t stateChanged = 0;
     uint8_t loop = 1;
     while(loop) {
-        //show options screen using state struct as data source
+        //show options screen using state struct as data source (userInterfaceSelectionList?)
         pressedButton = readButtons();
         _delay_ms(20);
         switch(pressedButton) {
@@ -213,7 +207,6 @@ void options_menu(switchState* state) {
                 break;
             case (1 << B_SC4): // default input
                 if (options_submenu(&(state->defaultInput), 2)) stateChanged = 1;
-                stateChanged = 1;
                 break;
             case (1 << B_OFF): // exit menu
                 loop = 0;
@@ -238,11 +231,15 @@ uint8_t options_submenu(uint8_t* option, uint8_t type) {
             loop = 0;
         }
     }
-    if (button == OFF) {           // show "canceled" and exit
-        return 0;
-    } else if (type == 1) {        // show "displayRotation set to ..."
-        return 1;
-    } else {                       // show "defaultInput set to..."
+    if (button == OFF) return 0;
+    else {
+        switch(type) {
+            case 1:
+                *option %= 2;
+                break;
+            default:
+                break;
+        }
         return 1;
     }
 }
@@ -262,8 +259,8 @@ uint8_t eeprom_write_state(switchState* state) {
 
 inline uint8_t get_checksum(switchState* state) {
     return state->currentInput + 
-            state->autoSwitchingEnabled + 
-            state->autoDisableOnLOS + 
-            state->defaultInput +
-            state->displayRotation;
+           state->autoSwitchingEnabled + 
+           state->autoDisableOnLOS + 
+           state->defaultInput +
+           state->displayRotation;
 }

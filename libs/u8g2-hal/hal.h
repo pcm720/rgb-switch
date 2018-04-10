@@ -1,4 +1,4 @@
-#include "i2c/i2c.h"
+#include "i2c.h"
 #include "../u8g2/csrc/u8g2.h"
 #include "../u8g2/csrc/u8x8.h"
 

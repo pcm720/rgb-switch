@@ -1,38 +1,39 @@
-# AVR Makefile
-# Originally written by Michael Cousins (http://github.com/mcous)
-# Modified by pcm720 (https://github.com/pcm720)
 
-# Makefile
-#
-# targets:
-#   all:    compiles the source code
-#   test:   tests the isp connection to the mcu
-#   flash:  writes compiled hex file to the mcu's flash memory
-#   fuse:   writes the fuse bytes to the MCU
-#   disasm: disassembles the code for debugging
-#   clean:  removes all .hex, .elf, and .o files in the source code and library directories
-
-PRJ = main
-
+PRJ = u8g2_test
 MCU = atmega328p
-CLK = 16000000
+CLK = 16000000UL
 
-PRG = apu2 -P /dev/ttyUSB0
-LFU = 0xFF
-HFU = 0xDE
-EFU = 0x05
+# External libraries
+U8G2LIB = libs/u8g2/csrc
+HALLIB = libs/u8g2-hal
+LIBSRC = $(wildcard *.c $(U8G2LIB)/*.c $(HALLIB)/*.c)
+LIBOBJ = $(LIBSRC:.c=.o)
+LIBHDR = $(LIBSRC:.c=.h)
 
-SRC = $(PRJ).c
-CFLAGS    = -Wall -Os -DF_CPU=$(CLK) -mmcu=$(MCU) $(INCLUDE)
-CFILES    = $(PRJ).c
+# Compiler and linker settings
+CPPFLAGS = -mmcu=$(MCU) -DF_CPU=$(CLK) -I. -I$(LIBDIR) -Wall
+CFLAGS = -Os -g -std=gnu11 -Wall
+CFLAGS += -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
+CFLAGS += -ffunction-sections -fdata-sections 
+LDFLAGS = -Wl,-Map,$(PRJ).map -mmcu=$(MCU) 
+LDFLAGS += -Wl,--gc-sections
 
-AVRDUDE = avrdude -c $(PRG) -p $(MCU) -C ~/.avrduderc -C /etc/avrdude.conf
 OBJCOPY = avr-objcopy
 OBJDUMP = avr-objdump
 SIZE    = avr-size --format=avr --mcu=$(MCU)
 CC      = avr-gcc
 
+# Programmer settings
+PRG = apu2 -P ft0
+AVRDUDE = taskset -c 1 avrdude -c $(PRG) -p $(MCU) -C ~/.avrduderc -C /etc/avrdude.conf
+LFU = 0xFF
+HFU = 0xDF
+EFU = 0x05
+
 all: $(PRJ).hex
+
+clean:
+	rm -f *.hex *.elf *.o *.map $(LIBOBJ)
 
 test:
 	$(AVRDUDE) -v
@@ -46,12 +47,11 @@ fuse:
 disasm: $(PRJ).elf
 	$(OBJDUMP) -d $(PRJ).elf
 
-clean:
-	rm -f *.hex *.elf *.o
-	$(foreach dir, $(EXT), rm -f $(dir)/*.o;)
-	
-$(PRJ).elf:
-	$(CC) $(CFLAGS) -c $(PRJ).c -o $(PRJ).elf
+%.o: %.c $(LIBHDR) Makefile
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<;
+
+$(PRJ).elf: $(LIBOBJ)
+	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 $(PRJ).hex: $(PRJ).elf
 	rm -f $(PRJ).hex
