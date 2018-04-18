@@ -1,11 +1,10 @@
-
-PRJ = u8g2_test
+PRJ = screen_test
 MCU = atmega328p
 CLK = 16000000UL
 
 # External libraries
-U8G2LIB = libs/u8g2/csrc
-HALLIB = libs/u8g2-hal
+U8G2LIB = ../../libs/u8g2/csrc
+HALLIB = ../../libs/u8g2-hal
 LIBSRC = $(wildcard *.c $(U8G2LIB)/*.c $(HALLIB)/*.c)
 LIBOBJ = $(LIBSRC:.c=.o)
 LIBHDR = $(LIBSRC:.c=.h)
@@ -42,7 +41,7 @@ flash: all
 	$(AVRDUDE) -U flash:w:$(PRJ).hex:i
 
 fuse:
-	$(AVRDUDE) -U lfuse:w:$(LFU):m -B 1200 -U hfuse:w:$(HFU):m -U efuse:w:$(EFU):m
+	$(AVRDUDE) -U lfuse:w:$(LFU):m -U -B 1200 hfuse:w:$(HFU):m -U efuse:w:$(EFU):m
 
 disasm: $(PRJ).elf
 	$(OBJDUMP) -d $(PRJ).elf

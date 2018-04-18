@@ -29,11 +29,11 @@ RGB Switcher code for ATmega328P
 #endif
 
 // inputs on PORT D
-#define B_SC1 0
-#define B_SC2 1
-#define B_SC3 3
-#define B_SC4 4
-#define B_OFF 2
+#define B_SC1 0x1E // ~0 & ~0xE0
+#define B_SC2 0x1D // ~1 & ~0xE0
+#define B_SC3 0x17 // ~3 & ~0xE0
+#define B_SC4 0x0F // ~4 & ~0xE0
+#define B_OFF 0x1B // ~2 & ~0xE0
 #define SD_LOS 5
 
 // switch control pins on PORT C
@@ -76,7 +76,7 @@ int main(void) {
     _delay_ms(50);
 
     while(1) {
-        if ((~PIND & ~0xFB) & (1 << B_OFF)) {
+        if ((~PIND & 0x1F) & 0x4) {
             _delay_ms(100); //check if OFF button is held for more than 100 us
             if ((~PIND & ~0xFB) & (1 << B_OFF)) {
                 options_menu(&state);
@@ -138,22 +138,22 @@ void switchOutput(uint8_t out) {
 }
 
 uint8_t readButtons(void) {
-    uint8_t buttons = 0;
-    if ((buttons = (PIND & ~0xE0)) != 0) {
-         switch((~buttons) & ~0xE0) {
-            case (1 << B_SC1):
+    uint8_t buttons = PIND & ~0xE0;
+    if (buttons != 0b00011111) {
+         switch(buttons) {
+            case (B_SC1):
                 return SW_C1;
                 break;
-            case (1 << B_SC2):
+            case (B_SC2):
                 return SW_C2;
                 break;
-            case (1 << B_SC3):
+            case (B_SC3):
                 return SW_C3;
                 break;
-            case (1 << B_SC4):
+            case (B_SC4):
                 return SW_C4;
                 break;
-            case (1 << B_OFF):
+            case (B_OFF):
                 return OFF;
                 break;
             default:
@@ -194,21 +194,21 @@ void options_menu(switchState* state) {
         pressedButton = readButtons();
         _delay_ms(20);
         switch(pressedButton) {
-            case (1 << B_SC1): // auto switching
+            case (SW_C1): // auto switching
                 state->autoSwitchingEnabled ^= 0x1;
                 stateChanged = 1;
                 break;
-            case (1 << B_SC2): // set display rotation
+            case (SW_C2): // set display rotation
                 if (options_submenu(&(state->displayRotation), 1)) stateChanged = 1;
                 break;
-            case (1 << B_SC3): // auto disable on LOS
+            case (SW_C3): // auto disable on LOS
                 state->autoDisableOnLOS ^= 0x1;
                 stateChanged = 1;
                 break;
-            case (1 << B_SC4): // default input
+            case (SW_C4): // default input
                 if (options_submenu(&(state->defaultInput), 2)) stateChanged = 1;
                 break;
-            case (1 << B_OFF): // exit menu
+            case (OFF): // exit menu
                 loop = 0;
                 break;
             default:
