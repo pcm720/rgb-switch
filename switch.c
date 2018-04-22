@@ -21,35 +21,35 @@ Switching functions
 #include <util/atomic.h>
 
 void switch_output(uint8_t out) {
-	ATOMIC_BLOCK(ATOMIC_FORCEON) { //disable interrupts
-		if ((DDRC & ~0xF0) != (1 << out)) { // check that selected switch is not already enabled
-			DDRC &= ~0x0F; // disable all switches on PORT C
-			_delay_ms(10);
-			DDRC |= (1 << out);
-			_delay_ms(10);
-		}
-	}
+    ATOMIC_BLOCK(ATOMIC_FORCEON) { //disable interrupts
+        if ((DDRC & ~0xF0) != (1 << out)) { // check that selected switch is not already enabled
+            DDRC &= ~0x0F; // disable all switches on PORT C
+            _delay_ms(10);
+            DDRC |= (1 << out);
+            _delay_ms(10);
+        }
+    }
 }
 
 uint8_t auto_switch(void) {
-	uint8_t activeInput = NOT_SELECTED;
+    uint8_t activeInput = NOT_SELECTED;
     for (uint8_t i = 0; i < 4; i++) {
         switch_output(i);
         _delay_ms(10);
         if (PIND & SD_LOS) {
-			activeInput = i;
-			i = 5;
-		}
+            activeInput = i;
+            i = 5;
+        }
     }
-	return activeInput;
+    return activeInput;
 }
 
 void manual_switch(uint8_t currentInput) {
-	ATOMIC_BLOCK(ATOMIC_FORCEON) { //disable interrupts
-		if (currentInput != OFF) {
-			switch_output(currentInput);
-		} else {
-			DDRC &= ~0x0F;
-		}
-	}
+    ATOMIC_BLOCK(ATOMIC_FORCEON) { //disable interrupts
+        if (currentInput != OFF) {
+            switch_output(currentInput);
+        } else {
+            DDRC &= ~0x0F;
+        }
+    }
 }

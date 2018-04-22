@@ -27,15 +27,15 @@ Main definitions file for RGB Switcher
 // inputs on PORT D
 #define DISPLAY_180
 #ifndef DISPLAY_180
-	#define B_SC1 0x1E // ~0 & ~0xE0
-	#define B_SC2 0x1D // ~1 & ~0xE0
-	#define B_SC3 0x17 // ~3 & ~0xE0
-	#define B_SC4 0x0F // ~4 & ~0xE0
+    #define B_SC1 0x1E // ~0 & ~0xE0
+    #define B_SC2 0x1D // ~1 & ~0xE0
+    #define B_SC3 0x17 // ~3 & ~0xE0
+    #define B_SC4 0x0F // ~4 & ~0xE0
 #else
-	#define B_SC1 0x0F
-	#define B_SC2 0x17
-	#define B_SC3 0x1D
-	#define B_SC4 0x1E
+    #define B_SC1 0x0F
+    #define B_SC2 0x17
+    #define B_SC3 0x1D
+    #define B_SC4 0x1E
 #endif
 #define SD_LOS 0x20 // MAX7461 LOS#
 

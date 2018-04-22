@@ -27,20 +27,20 @@ uint8_t eeprom_read_state(switchOptions* options) {
     eeprom_read_block((void*)options, (void*)0, sizeof(*options));
     if (get_checksum(options) == options->checksum) return 0; // read successful
     else {
-		draw(EEPROM_READ_FAILED);
-		_delay_ms(5000);
-		return 1; // read failed
-	}
+        draw(EEPROM_READ_FAILED);
+        _delay_ms(5000);
+        return 1; // read failed
+    }
 }
 
 uint8_t eeprom_write_state(switchOptions* options) {
     options->checksum = get_checksum(options);
     eeprom_update_block((const void*)options, (void*)0, sizeof(*options));
     if (eeprom_read_state(options)) {
-		draw(EEPROM_WRITE_FAILED);
-		_delay_ms(5000);
-		return 1; // write failed
-	} else return 0; // write successful
+        draw(EEPROM_WRITE_FAILED);
+        _delay_ms(5000);
+        return 1; // write failed
+    } else return 0; // write successful
 }
 
 inline uint8_t get_checksum(switchOptions* options) {

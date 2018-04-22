@@ -32,187 +32,188 @@ void mcu_sleep(void);
 void options_menu(switchOptions* options);
 
 int main(void) {
-	
-	switchOptions options;
-	init(&options);
+    
+    switchOptions options;
+    init(&options);
 
-	uint8_t sleep_timer = 0;
-	uint8_t currentInput = options.defaultInput;
-	uint8_t autoSwitchingState = options.autoSwitchingEnabled;
-	uint8_t syncState = 0;
+    uint8_t sleep_timer = 0;
+    uint8_t currentInput = options.defaultInput;
+    uint8_t autoSwitchingState = options.autoSwitchingEnabled;
+    uint8_t syncState = 0;
 
-	activeButton = NOT_SELECTED;
-	if (autoSwitchingState == 0) manual_switch(currentInput);
-	else draw(SYNC_SEARCH);
+    activeButton = NOT_SELECTED;
+    if (autoSwitchingState == 0) manual_switch(currentInput);
+    else draw(SYNC_SEARCH);
 
-	while(1) {
-		while (!powerSave) {
-			sleep_timer++;
+    while(1) {
+        while (!powerSave) {
+            sleep_timer++;
 
-			if (sleep_timer == 0xFF) {
-				toggle_powerSave(); // disable display
-				sleep_timer = 0;
-			}
+            if (sleep_timer == 0xFF) {
+                toggle_powerSave(); // disable display
+                sleep_timer = 0;
+            }
 
-			if (offCounter == 0xFF) { // OFF button was held, switch to options menu
-				sleep_timer = 0;
-				options_menu(&options);
-				if (autoSwitchingState && !options.autoSwitchingEnabled) currentInput = options.defaultInput;
-			}
-			
-			offCounter = 0;
+            if (offCounter == 0xFF) { // OFF button was held, switch to options menu
+                sleep_timer = 0;
+                options_menu(&options);
+                if (autoSwitchingState && !options.autoSwitchingEnabled) currentInput = options.defaultInput;
+            }
+            
+            offCounter = 0;
 
-			if (!(PIND & SD_LOS)) {
-				if (options.autoSwitchingEnabled && autoSwitchingState) {
-					currentInput = auto_switch();
-					if (currentInput != NOT_SELECTED) autoSwitchingState = 0;
-					else {
-						sleep_timer = 0;
-						currentInput = SYNC_SEARCH;
-					}
-				}
-				if ((options.DisableOnLOS || options.autoSwitchingEnabled) && syncState) {
-						autoSwitchingState = 1;
-						syncState = 0;
-						sleep_timer = 0;
-						currentInput = OFF;
-						switch_output(currentInput);
-						draw(SYNC_LOST);
-						_delay_ms(1000);
-				}
-			} else syncState = 1;
+            if (!(PIND & SD_LOS)) {
+                if (options.autoSwitchingEnabled && autoSwitchingState) {
+                    currentInput = auto_switch();
+                    if (currentInput != NOT_SELECTED) autoSwitchingState = 0;
+                    else {
+                        sleep_timer = 0;
+                        currentInput = SYNC_SEARCH;
+                    }
+                }
+                if ((options.DisableOnLOS || options.autoSwitchingEnabled) && syncState) {
+                        autoSwitchingState = 1;
+                        syncState = 0;
+                        sleep_timer = 0;
+                        currentInput = OFF;
+                        switch_output(currentInput);
+                        draw(SYNC_LOST);
+                        _delay_ms(1000);
+                }
+            } else syncState = 1;
 
-			if ((activeButton != NOT_SELECTED) && (offCounter == 0)) { // button press happened, switch to selected input
-				sleep_timer = 0;
-				syncState = 0;
-				if (currentInput == OFF) autoSwitchingState = 1;
-				else autoSwitchingState = 0;
-				
-				currentInput = activeButton;
-				manual_switch(currentInput);
-				draw(currentInput);
- 				_delay_ms(500);
-				activeButton = NOT_SELECTED;
-			}
-			draw(currentInput); // update screen
-		}
-		mcu_sleep(); // put ATmega to sleep
-	}
+            if ((activeButton != NOT_SELECTED) && (offCounter == 0)) { // button press happened, switch to selected input
+                sleep_timer = 0;
+                syncState = 0;
+                
+                currentInput = activeButton;
+                if (currentInput == OFF) autoSwitchingState = 1;
+                else autoSwitchingState = 0;
+                
+                manual_switch(currentInput);
+                draw(currentInput);
+                 _delay_ms(500);
+                activeButton = NOT_SELECTED;
+            }
+            draw(currentInput); // update screen
+        }
+        mcu_sleep(); // put ATmega to sleep
+    }
 }
 
 void init(switchOptions* options) {
-	DDRB = 0x20; // enable SCK LED
-	DDRD = 0x00; // set PD to input
-	DDRC = ~0x0F; // initialize switch control pins as inputs
-	PORTD = 0x00; // disable pull-ups
-	PORTC = 0x00; // disable pull-ups
+    DDRB = 0x20; // enable SCK LED
+    DDRD = 0x00; // set PD to input
+    DDRC = ~0x0F; // initialize switch control pins as inputs
+    PORTD = 0x00; // disable pull-ups
+    PORTC = 0x00; // disable pull-ups
 
-	display_init(); // interrupts are enabled during TWI initialization
+    display_init(); // interrupts are enabled during TWI initialization
 
-	if (eeprom_read_state(options)) {     // read config from EEPROM
+    if (eeprom_read_state(options)) {     // read config from EEPROM
         options->autoSwitchingEnabled = 1; // reading failed, revert to default parameters
         options->DisableOnLOS = 0;
-		options->defaultInput = OFF; 
-		options->checksum = 0x0;
-    	eeprom_write_state(options); // try to save defaults
+        options->defaultInput = OFF; 
+        options->checksum = 0x0;
+        eeprom_write_state(options); // try to save defaults
     }
 
-	PCMSK2 = 0x3B; // prepare interrupts for every input pin except PD2
-	EICRA |= 0x00; // set INT0 to trigger when PD2 is low
-	PCICR = 0x4; // enable PCINT for PORTD
-	EIMSK |= 0x01; // enable INT0
+    PCMSK2 = 0x3B; // prepare interrupts for every input pin except PD2
+    EICRA |= 0x00; // set INT0 to trigger when PD2 is low
+    PCICR = 0x4; // enable PCINT for PORTD
+    EIMSK |= 0x01; // enable INT0
 }
 
 void mcu_sleep(void) {
-	set_sleep_mode(SLEEP_MODE_IDLE); // set sleep mode
-	cli();
-	PORTB ^= 0x20;
-	_delay_ms(500);
-	PORTB ^= 0x20;
-	_delay_ms(500);
-	PORTB ^= 0x20;
-	_delay_ms(500);
-	PORTB ^= 0x20;
-	sleep_enable();
-	sei();
-	sleep_cpu();
-	sleep_disable();
+    set_sleep_mode(SLEEP_MODE_IDLE); // set sleep mode
+    cli();
+    PORTB ^= 0x20;
+    _delay_ms(500);
+    PORTB ^= 0x20;
+    _delay_ms(500);
+    PORTB ^= 0x20;
+    _delay_ms(500);
+    PORTB ^= 0x20;
+    sleep_enable();
+    sei();
+    sleep_cpu();
+    sleep_disable();
 }
 
 void options_menu(switchOptions* options) {
     uint8_t stateChanged = 0;
     uint8_t loop = 1;
 
-	activeButton = NOT_SELECTED;
-	draw_options(options);
-	offCounter = 0;
+    activeButton = NOT_SELECTED;
+    draw_options(options);
+    offCounter = 0;
     while(loop) {
-		draw_options(options);
+        draw_options(options);
         switch(activeButton) {
             case (SW_C1): // auto switching
-				options->autoSwitchingEnabled ^= 0x1;
-				stateChanged = 1;
+                options->autoSwitchingEnabled ^= 0x1;
+                stateChanged = 1;
                 break;
             case (SW_C2): // auto disable on LOS
-				options->DisableOnLOS ^= 0x1;
-				stateChanged = 1;
+                options->DisableOnLOS ^= 0x1;
+                stateChanged = 1;
                 break;
             case (SW_C3): // default input
-				options->defaultInput++;
-				if (options->defaultInput > 4) options->defaultInput = 0;
-				stateChanged = 1;
+                options->defaultInput++;
+                if (options->defaultInput > 4) options->defaultInput = 0;
+                stateChanged = 1;
                 break;
             case (OFF): // exit menu
-				loop = 0;
+                loop = 0;
                 break;
             default:
                 break;
         }
-		offCounter = 0;
-		activeButton = NOT_SELECTED;
+        offCounter = 0;
+        activeButton = NOT_SELECTED;
     }
-	if (stateChanged) eeprom_write_state(options);
+    if (stateChanged) eeprom_write_state(options);
 }
 
 /*-------------------------------------------------
-				Interrupt vectors
+                Interrupt vectors
 -------------------------------------------------*/
 
 ISR(INT0_vect) { // OFF button interrupt
-	if (powerSave) {
-		toggle_powerSave();
-	} else {
-		offCounter++;
-		activeButton = NOT_SELECTED;
-		if (offCounter > 6) {
-			offCounter = 0xFF;
-			EIMSK = 0x00; // disable INT0, will be enabled later by options_menu draw functions
-		} else if (offCounter < 2) activeButton = OFF;
-	}
-	_delay_ms(200);
+    if (powerSave) {
+        toggle_powerSave();
+    } else {
+        offCounter++;
+        activeButton = NOT_SELECTED;
+        if (offCounter > 6) {
+            offCounter = 0xFF;
+            EIMSK = 0x00; // disable INT0, will be enabled later by options_menu draw functions
+        } else if (offCounter < 3) activeButton = OFF;
+    }
+    _delay_ms(150);
 }
 
 ISR(PCINT2_vect) {
-	uint8_t inputs = PIND;
-	if (powerSave) toggle_powerSave();
-	else {
-		switch(inputs & 0x1F) {
-			case (B_SC1):
-				activeButton = SW_C1;
-				break;
-			case (B_SC2):
-				activeButton = SW_C2;
-				break;
-			case (B_SC3): 
-				activeButton = SW_C3;
-				break; 
-			case (B_SC4):
-				activeButton = SW_C4;
-				break;
-			default:
-				activeButton = NOT_SELECTED;
-				break;
-		}
-	}
-   	_delay_ms(200);
+    uint8_t inputs = PIND;
+    if (powerSave) toggle_powerSave();
+    else {
+        switch(inputs & 0x1F) {
+            case (B_SC1):
+                activeButton = SW_C1;
+                break;
+            case (B_SC2):
+                activeButton = SW_C2;
+                break;
+            case (B_SC3): 
+                activeButton = SW_C3;
+                break; 
+            case (B_SC4):
+                activeButton = SW_C4;
+                break;
+            default:
+                activeButton = NOT_SELECTED;
+                break;
+        }
+    }
+       _delay_ms(100);
 }

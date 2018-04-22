@@ -5,8 +5,8 @@ CLK = 16000000UL
 
 # External libraries
 U8G2LIB = libs/u8g2/csrc
-HALLIB = libs/u8g2-hal
-LIBSRC = $(wildcard *.c $(U8G2LIB)/*.c $(HALLIB)/*.c)
+I2CLIB = libs/i2c
+LIBSRC = $(wildcard *.c $(U8G2LIB)/*.c $(I2CLIB)/*.c)
 LIBOBJ = $(LIBSRC:.c=.o)
 LIBHDR = $(LIBSRC:.c=.h)
 
