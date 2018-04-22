@@ -48,7 +48,6 @@ int main(void) {
 	while(1) {
 		while (!powerSave) {
 			sleep_timer++;
-			offCounter = 0;
 
 			if (sleep_timer == 0xFF) {
 				toggle_powerSave(); // disable display
@@ -60,6 +59,8 @@ int main(void) {
 				options_menu(&options);
 				if (autoSwitchingState && !options.autoSwitchingEnabled) currentInput = options.defaultInput;
 			}
+			
+			offCounter = 0;
 
 			if (!(PIND & SD_LOS)) {
 				if (options.autoSwitchingEnabled && autoSwitchingState) {
@@ -187,7 +188,6 @@ ISR(INT0_vect) { // OFF button interrupt
 			offCounter = 0xFF;
 			EIMSK = 0x00; // disable INT0, will be enabled later by options_menu draw functions
 		} else if (offCounter < 2) activeButton = OFF;
-		
 	}
 	_delay_ms(200);
 }

@@ -19,7 +19,7 @@ Screen-related functions
 
 #include "display.h"
 #include "libs/u8g2-hal/hal.h"
-#include "extra/xbm/xbm.h"
+#include "xbm.h"
 
 u8g2_t u8g2;
 
