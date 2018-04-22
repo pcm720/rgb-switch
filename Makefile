@@ -1,5 +1,5 @@
 
-PRJ = u8g2_test
+PRJ = main
 MCU = atmega328p
 CLK = 16000000UL
 
