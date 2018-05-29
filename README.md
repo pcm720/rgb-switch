@@ -16,4 +16,4 @@ File that contains XBM images (*xbm.h*) is not included due to possible copyrigh
 
 You can find more examples of screen functionality in *extra/pictures*
 
-![Switch](extra/pictures/Switch.jpg)
+![Switch](extra/pictures/Overall.jpg)
