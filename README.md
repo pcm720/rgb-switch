@@ -9,9 +9,6 @@ Sync detection and automatic switching are based on MAX7461.
 
 Note that MAX7461 doesn't detect 31 kHz sync signals, so automatic detection can't be used with something like Dreamcast VGA to RGBs adaptors/cables.
 
-File that contains XBM images (*xbm.h*) is not included due to possible copyright issues I don't want to deal with.
-
-
 # Images
 
 You can find examples of screen functionality in *extra/pictures*
