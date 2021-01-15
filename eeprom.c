@@ -21,7 +21,11 @@ EEPROM operations
 #include "display.h"
 #include <avr/eeprom.h>
 
-inline uint8_t get_checksum(switchOptions* options);
+uint8_t get_checksum(switchOptions* options) {
+    return options->autoSwitchingEnabled + 
+           options->DisableOnLOS + 
+           options->defaultInput;
+}
 
 uint8_t eeprom_read_state(switchOptions* options) {
     eeprom_read_block((void*)options, (void*)0, sizeof(*options));
@@ -43,8 +47,3 @@ uint8_t eeprom_write_state(switchOptions* options) {
     } else return 0; // write successful
 }
 
-inline uint8_t get_checksum(switchOptions* options) {
-    return options->autoSwitchingEnabled + 
-           options->DisableOnLOS + 
-           options->defaultInput;
-}
